@@ -4,24 +4,24 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('help')
-    .setDescription('Menampilkan daftar semua perintah atau info tentang perintah tertentu')
+    .setDescription('Displays a list of all commands or info about a specific command')
     .addStringOption(option =>
       option.setName('command')
-        .setDescription('Nama perintah yang ingin ditampilkan informasinya')
+        .setDescription('The name of the command to get information about')
         .setRequired(false)),
   async execute(interaction) {
     const { commands } = interaction.client;
     const commandName = interaction.options.getString('command');
     
     if (!commandName) {
-      // Jika tidak ada command yang disebutkan, tampilkan semua command
+      // If no command is specified, show all commands
       const helpEmbed = new EmbedBuilder()
         .setColor('#0099ff')
-        .setTitle('Daftar Perintah')
-        .setDescription('Berikut adalah daftar semua perintah yang tersedia:')
-        .setFooter({ text: 'Gunakan /help [nama perintah] untuk informasi lebih detail' });
+        .setTitle('Command List')
+        .setDescription('Here is a list of all available commands:')
+        .setFooter({ text: 'Use /help [command name] for more details' });
       
-      // Kelompokkan command berdasarkan kategori
+      // Categorize commands
       const generalCommands = [];
       const moderationCommands = [];
       const utilityCommands = [];
@@ -41,22 +41,22 @@ module.exports = {
       }
       
       if (moderationCommands.length > 0) {
-        helpEmbed.addFields({ name: '🛡️ Moderasi', value: moderationCommands.join('\n') });
+        helpEmbed.addFields({ name: '🛡️ Moderation', value: moderationCommands.join('\n') });
       }
       
       if (utilityCommands.length > 0) {
-        helpEmbed.addFields({ name: '🔧 Utilitas', value: utilityCommands.join('\n') });
+        helpEmbed.addFields({ name: '🔧 Utility', value: utilityCommands.join('\n') });
       }
       
       return interaction.reply({ embeds: [helpEmbed] });
     }
     
-    // Jika nama command disebutkan, tampilkan info detail
+    // If a command name is provided, show detailed info
     const command = commands.get(commandName);
     
     if (!command) {
       return interaction.reply({
-        content: `Tidak ada perintah dengan nama \`${commandName}\`!`,
+        content: `There is no command with the name \`${commandName}\`!`,
         ephemeral: true
       });
     }
@@ -66,23 +66,23 @@ module.exports = {
       .setTitle(`Command: /${command.data.name}`)
       .setDescription(command.data.description);
     
-    // Jika command memiliki subcommand
+    // If the command has subcommands
     if (command.data.options && command.data.options.some(opt => opt.type === 1)) {
       const subcommands = command.data.options.filter(opt => opt.type === 1);
       const subCommandsList = subcommands.map(sub => `\`${sub.name}\`: ${sub.description}`).join('\n');
-      commandEmbed.addFields({ name: 'Subcommand', value: subCommandsList });
+      commandEmbed.addFields({ name: 'Subcommands', value: subCommandsList });
     }
     
-    // Jika command memiliki opsi
+    // If the command has options
     if (command.data.options && command.data.options.some(opt => opt.type !== 1)) {
       const options = command.data.options.filter(opt => opt.type !== 1);
       const optionsList = options.map(opt => {
-        const required = opt.required ? '(wajib)' : '(opsional)';
+        const required = opt.required ? '(required)' : '(optional)';
         return `\`${opt.name}\`: ${opt.description} ${required}`;
       }).join('\n');
       
       if (optionsList) {
-        commandEmbed.addFields({ name: 'Opsi', value: optionsList });
+        commandEmbed.addFields({ name: 'Options', value: optionsList });
       }
     }
     

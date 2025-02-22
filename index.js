@@ -3,10 +3,10 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// Menggunakan environment variable untuk token
+// Using environment variables for tokens
 const token = process.env.TOKEN;
 
-// Membuat client Discord dengan intent yang diperlukan
+// Create a Discord client with the required intent
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -17,13 +17,13 @@ const client = new Client({
   ]
 });
 
-// Menyiapkan collection untuk commands
+// Set up a collection for commands
 client.commands = new Collection();
 const commands = [];
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
-// Membaca semua file command
+// Read all command files
 for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file);
   const command = require(filePath);
@@ -32,36 +32,36 @@ for (const file of commandFiles) {
     client.commands.set(command.data.name, command);
     commands.push(command.data.toJSON());
   } else {
-    console.log(`[WARNING] Command di ${filePath} tidak memiliki property "data" atau "execute".`);
+    console.log(`[WARNING] Command in ${filePath} does not have "data" or "execute" property.`);
   }
 }
 
-// Event saat bot siap
+// Event when the bot is ready
 client.once('ready', async () => {
   console.log(`Logged in as ${client.user.tag}!`);
   
-  // Mendaftarkan slash commands secara global
+  // Register global slash commands
   const rest = new REST({ version: '10' }).setToken(token);
   
   try {
-    console.log('Memulai refresh application (/) commands secara global.');
+    console.log('Starting refresh of application (/) commands globally.');
     
     await rest.put(
       Routes.applicationCommands(client.user.id),
       { body: commands },
     );
     
-    console.log('Berhasil mendaftarkan application (/) commands secara global.');
-    console.log(`Bot aktif di ${client.guilds.cache.size} server!`);
+    console.log('Successfully registered application (/) commands globally.');
+    console.log(`Bot is active in ${client.guilds.cache.size} servers!`);
   } catch (error) {
     console.error(error);
   }
   
-  // Set status bot
-  client.user.setActivity(`${client.guilds.cache.size} server | /help`, { type: 'WATCHING' });
+  // Set bot status
+  client.user.setActivity(`${client.guilds.cache.size} servers | /help`, { type: 'WATCHING' });
 });
 
-// Event saat interaksi diterima
+// Event when an interaction is received
 client.on('interactionCreate', async interaction => {
   if (!interaction.isCommand()) return;
   
@@ -73,7 +73,7 @@ client.on('interactionCreate', async interaction => {
     await command.execute(interaction);
   } catch (error) {
     console.error(error);
-    const errorMessage = `Terjadi kesalahan saat menjalankan command: ${error.message}`;
+    const errorMessage = `An error occurred while executing the command: ${error.message}`;
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({ content: errorMessage, ephemeral: true });
     } else {
@@ -82,12 +82,12 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-// Event saat bot ditambahkan ke server baru
+// Event when the bot is added to a new server
 client.on('guildCreate', guild => {
-  console.log(`Bot ditambahkan ke server baru: ${guild.name} (id: ${guild.id})`);
-  client.user.setActivity(`${client.guilds.cache.size} server | /help`, { type: 'WATCHING' });
+  console.log(`Bot added to a new server: ${guild.name} (id: ${guild.id})`);
+  client.user.setActivity(`${client.guilds.cache.size} servers | /help`, { type: 'WATCHING' });
   
-  // Mencari channel untuk kirim pesan selamat datang
+  // Find a channel to send a welcome message
   const systemChannel = guild.systemChannel || 
                        guild.channels.cache.find(channel => 
                          channel.type === 'GUILD_TEXT' && 
@@ -97,26 +97,26 @@ client.on('guildCreate', guild => {
   if (systemChannel) {
     const welcomeEmbed = new EmbedBuilder()
       .setColor('#00FF00')
-      .setTitle('Terima kasih telah menambahkan saya!')
-      .setDescription('Gunakan `/help` untuk melihat daftar perintah yang tersedia.')
+      .setTitle('Thank you for adding me!')
+      .setDescription('Use `/help` to see the list of available commands.')
       .addFields(
-        { name: 'Setup Awal', value: 'Untuk pengalaman terbaik, silakan buat channel `welcome` untuk pemberitahuan member baru dan `logs` untuk logging.', inline: false }
+        { name: 'Initial Setup', value: 'For the best experience, please create a `welcome` channel for new member notifications and a `logs` channel for logging.', inline: false }
       )
-      .setFooter({ text: `Bot ini berjalan di ${client.guilds.cache.size} server` });
+      .setFooter({ text: `This bot is running on ${client.guilds.cache.size} servers` });
     
     systemChannel.send({ embeds: [welcomeEmbed] });
   }
 });
 
-// Event saat anggota baru bergabung
+// Event when a new member joins
 client.on('guildMemberAdd', async member => {
   const welcomeChannel = member.guild.channels.cache.find(ch => ch.name === 'welcome');
   if (!welcomeChannel) return;
   
   const welcomeEmbed = new EmbedBuilder()
     .setColor('#00FF00')
-    .setTitle('Anggota Baru!')
-    .setDescription(`Selamat datang di server, ${member}! Kami senang kamu bergabung.`)
+    .setTitle('New Member!')
+    .setDescription(`Welcome to the server, ${member}! We're glad to have you here.`)
     .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
     .setTimestamp()
     .setFooter({ text: `Member #${member.guild.memberCount}` });
@@ -124,7 +124,7 @@ client.on('guildMemberAdd', async member => {
   welcomeChannel.send({ embeds: [welcomeEmbed] });
 });
 
-// Sistem logging sederhana
+// Simple logging system
 client.on('messageDelete', async message => {
   if (message.author.bot) return;
   
@@ -133,15 +133,15 @@ client.on('messageDelete', async message => {
   
   const deleteEmbed = new EmbedBuilder()
     .setColor('#FF0000')
-    .setTitle('Pesan Dihapus')
-    .setDescription(`Pesan dari ${message.author} dihapus dari ${message.channel}`)
+    .setTitle('Message Deleted')
+    .setDescription(`A message from ${message.author} was deleted from ${message.channel}`)
     .addFields(
-      { name: 'Konten', value: message.content || 'Tidak ada konten text' }
+      { name: 'Content', value: message.content || 'No text content' }
     )
     .setTimestamp();
   
   logChannel.send({ embeds: [deleteEmbed] });
 });
 
-// Login bot
+// Bot login
 client.login(token);
